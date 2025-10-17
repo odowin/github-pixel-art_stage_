@@ -1,0 +1,92 @@
+name: Daily GitHub Pixel Art Commit
+
+on:
+  schedule:
+    - cron: '30 23 * * *'  # chaque jour à 23h30 UTC
+  workflow_dispatch:
+
+env:
+  COMMITS_PER_PIXEL: 10  # nombre de commits pour un "1" dans la matrice
+
+jobs:
+  daily-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Generate commits from pattern
+        run: |
+          #!/usr/bin/env python3
+          import datetime, os, random, subprocess, requests
+
+          COMMITS_PER_PIXEL = int(os.environ['COMMITS_PER_PIXEL'])
+          GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
+          USERNAME = os.environ['GITHUB_ACTOR']
+
+          today = datetime.datetime.utcnow().date()
+          weekday = today.weekday()  # 0 = Lundi, 6 = Dimanche
+          week_number = today.isocalendar()[1]-1
+
+          # ======== MATRISE =========
+          # Exemple : valeurs entre 0 et 1 pour nuances
+          // year: 2025  cols: 53
+          pattern = [
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0],  # dim
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,1,1,1,0,1,0,0],  # lun
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0],  # mar
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0.6,0.3,1,0.6,0.3,1,0,0,0],  # mer
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0],  # jeu
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,1,0,0],  # ven
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,1,1,0,1,1,0],  # sam
+          ]
+
+          # Ajuster ligne pour correspondre à dim=0, lun=1...
+          row = 0 if weekday == 6 else weekday + 1
+
+          # ======== Calcul commits restants =========
+          total_commits_today = round(pattern[row][week_number] * COMMITS_PER_PIXEL)
+
+          # API GitHub pour récupérer commits déjà faits aujourd'hui
+          query = """
+          {
+            user(login: "%s") {
+              contributionsCollection(from: "%sT00:00:00Z", to: "%sT23:59:59Z") {
+                commitContributionsByRepository {
+                  contributions {
+                    totalCount
+                  }
+                }
+              }
+            }
+          }
+          """ % (USERNAME, today, today)
+
+          headers = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
+          r = requests.post("https://api.github.com/graphql", json={"query": query}, headers=headers)
+          data = r.json()
+
+          already_done = sum([repo["contributions"]["totalCount"]
+                              for repo in data["data"]["user"]["contributionsCollection"]["commitContributionsByRepository"]])
+
+          commits_to_make = max(0, total_commits_today - already_done)
+
+          print(f"Commits déjà faits aujourd'hui: {already_done}")
+          print(f"Commits à générer: {commits_to_make}")
+
+          # ======== Générer commits =========
+          for _ in range(commits_to_make):
+              easter = random.choice(['👾','🛸','✨'])
+              with open("daily.txt", "a") as f:
+                  f.write(f"Commit painting {datetime.datetime.utcnow()} {easter}\n")
+              subprocess.run(["git", "add", "daily.txt"])
+              subprocess.run(["git", "commit", "-m", f"Random commit {datetime.datetime.utcnow()} {easter}"])
+
+      - name: Push commits
+        run: git push
