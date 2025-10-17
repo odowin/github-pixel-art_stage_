@@ -21,15 +21,16 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
 
-          - name: Install Python dependencies
-            run: pip install requests
+      - name: Install Python dependencies
+        run: pip install requests
 
-          - name: Generate commits from pattern
-            env:
-              COMMITS_PER_PIXEL: ${{ env.COMMITS_PER_PIXEL }}
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              USERNAME: ${{ github.actor }}
-            run: python3 <<'EOF'
+      - name: Generate commits from pattern
+        env:
+          COMMITS_PER_PIXEL: ${{ env.COMMITS_PER_PIXEL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USERNAME: ${{ github.actor }}
+        run: |
+          python3 <<'EOF'
           import datetime, os, random, subprocess, requests
 
           COMMITS_PER_PIXEL = int(os.environ['COMMITS_PER_PIXEL'])
