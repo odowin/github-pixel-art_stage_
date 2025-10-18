@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  COMMITS_PER_PIXEL: 10  # nombre de commits pour un "1" dans la matrice
+  COMMITS_PER_PIXEL: 50  # nombre de commits pour un "1" dans la matrice
 
 jobs:
   daily-commits:
@@ -91,9 +91,9 @@ jobs:
           for _ in range(commits_to_make):
               easter = random.choice(['👾','🛸','✨'])
               with open("daily.txt", "a") as f:
-                  f.write(f"Commit painting {datetime.datetime.utcnow()} {easter}\n")
+                  f.write(f"Painting commit {datetime.datetime.utcnow()} {easter}\n")
               subprocess.run(["git", "add", "daily.txt"])
-              subprocess.run(["git", "commit", "-m", f"Random commit {datetime.datetime.utcnow()} {easter}"])
+              subprocess.run(["git", "commit", "-m", f" Painting commit {datetime.datetime.utcnow()} {easter}"])
 
       - name: Push commits
         run: git push
