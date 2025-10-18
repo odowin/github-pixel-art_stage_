@@ -18,8 +18,9 @@ jobs:
 
       - name: Set up Git user
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
 
       - name: Install Python dependencies
         run: pip install requests
