@@ -2,7 +2,7 @@ name: Daily GitHub Pixel Art Commit
 
 on:
   schedule:
-    - cron: '30 23 * * *'  # chaque jour à 23h30 UTC
+    - cron: '45 23 * * *'  # chaque jour à 23h30 UTC
   workflow_dispatch:
 
 env:
