@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  COMMITS_PER_PIXEL: 50  # nombre de commits pour un "1" dans la matrice
+  COMMITS_PER_PIXEL: 151  # nombre de commits pour un "1" dans la matrice
 
 jobs:
   daily-commits:
